@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canal-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: canal-exporter
+  template:
+    metadata:
+      annotations:
+        prometheus.io/port: "9120"
+        prometheus.io/scrape: "true"
+      labels:
+        app: canal-exporter
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: canal-server
+            topologyKey: kubernetes.io/hostname
+      imagePullSecrets:
+      - name: harbor
+      containers:
+      - name: canal-exporter
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+        image: 31harbor.tencentcloudcr.com/base/canal_exporter:v0.0.1
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: username
+          value: root
+        - name: password
+          value: password
+        - name: host
+          value: 172.16.22.14
+        - name: filepath
+          value: "/opt/canal/canalschema/meta.dat"
+        livenessProbe:
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          httpGet:
+            path: /health
+            port: 9120
+            scheme: HTTP
+        readinessProbe:
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          httpGet:
+            path: /health
+            port: 9120
+            scheme: HTTP
+        ports:
+        - containerPort: 9120
+        volumeMounts:
+        - mountPath: /opt/canal
+          name: canal-server
+          readOnly: true
+      volumes:
+      - name: canal-server
+        persistentVolumeClaim:
+          claimName: canal-server

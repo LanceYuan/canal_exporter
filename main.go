@@ -71,10 +71,10 @@ func mysqlStatus() {
 
 	go func() {
 		for {
+			time.Sleep(5 * time.Second)
 			mysql_binlog.Reset()
 			db.Raw("show master status").Scan(&result)
 			mysql_binlog.WithLabelValues("mysql", result.File).Set(result.Position)
-			time.Sleep(5 * time.Second)
 		}
 	}()
 }
@@ -82,19 +82,21 @@ func mysqlStatus() {
 func canalStatus() {
 	go func() {
 		for {
+			time.Sleep(5 * time.Second)
 			canal_binlog.Reset()
 			content, err := os.ReadFile(filepath)
 			if err != nil {
 				health = false
 				log.Println(err.Error())
+				continue
 			}
 			var result canal_binlog_status
 			if err := json.Unmarshal(content, &result); err != nil {
 				health = false
 				log.Println(err.Error())
+				continue
 			}
 			canal_binlog.WithLabelValues("canal", result.ClientDatas[0].Cursor.Postion.JournalName).Set(result.ClientDatas[0].Cursor.Postion.Position)
-			time.Sleep(5 * time.Second)
 		}
 	}()
 }

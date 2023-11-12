@@ -82,6 +82,7 @@ func mysqlStatus() {
 func canalStatus() {
 	go func() {
 		for {
+			health = true
 			time.Sleep(5 * time.Second)
 			canal_binlog.Reset()
 			content, err := os.ReadFile(filepath)
@@ -102,7 +103,7 @@ func canalStatus() {
 }
 
 func init() {
-	log.SetFlags(log.LstdFlags)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
 func main() {
